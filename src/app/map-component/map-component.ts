@@ -1,25 +1,23 @@
-import { OnInit, AfterViewInit, Component, OnDestroy } from '@angular/core';
+import { AfterViewInit, Component, OnDestroy } from '@angular/core';
 import * as L from 'leaflet';
 
 type MapMode = 'road' | 'satellite';
-
 @Component({
   standalone: true,
-  selector: 'app-root',
-  templateUrl: './app.component.html',
-  styleUrl: './app.component.css',
+  imports: [],
+  selector: 'app-map-component',
+  styleUrl: './map-component.css',
+  templateUrl: './map-component.html',
 })
-export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
-  protected mode: MapMode = 'road';
-  protected status = 'Requesting location…';
+export class MapComponent implements AfterViewInit, OnDestroy {
+  mode: MapMode = 'road';
+  status = 'Requesting location…';
 
   private map?: L.Map;
   private marker?: L.CircleMarker;
   private accuracyCircle?: L.Circle;
   private roadLayer?: L.TileLayer;
   private satelliteLayer?: L.TileLayer;
-
-  ngOnInit() {}
 
   ngAfterViewInit(): void {
     this.map = L.map('map', {
@@ -45,7 +43,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     this.locateMe();
   }
 
-  protected setMode(mode: MapMode): void {
+  setMode(mode: MapMode): void {
     if (!this.map) return;
 
     this.mode = mode;
@@ -60,7 +58,7 @@ export class AppComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  protected locateMe(): void {
+  locateMe(): void {
     if (!navigator.geolocation) {
       this.status = 'Geolocation is not supported';
       return;

@@ -1,4 +1,4 @@
-<main class="app">
+<main class="map-component">
   <header class="toolbar">
     <div class="brand">
       <span class="brand-icon">⌖</span>
@@ -9,24 +9,28 @@
     </div>
 
     <div class="actions">
-      <button [class.active]="mode === 'road'" (click)="setMode('road')">
+      <button
+        [class.active]="mode === 'road'"
+        (click)="setMode('road')">
         Road
       </button>
-      <button [class.active]="mode === 'satellite'" (click)="setMode('satellite')">
+      <button
+        [class.active]="mode === 'satellite'"
+        (click)="setMode('satellite')">
         Satellite
       </button>
       <button
         class="locate"
         (click)="locateMe()"
         aria-label="Find my location"
-        title="Find my location"
-      >
+        title="Find my location">
         ⊙
       </button>
     </div>
   </header>
 
   <section class="map-container">
-    <div id="map" role="application" aria-label="Interactive map"></div>
+    <div id="map" role="application"
+         aria-label="Interactive map"></div>
   </section>
 </main>
