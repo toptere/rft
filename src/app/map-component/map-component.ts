@@ -20,22 +20,17 @@ export class MapComponent implements AfterViewInit, OnDestroy {
   private satelliteLayer?: L.TileLayer;
 
   ngAfterViewInit(): void {
-    this.map = L.map('map', {
-      zoomControl: false,
-    }).setView([46.6, 2.4], 6);
 
-    L.control.zoom({ position: 'bottomright' }).addTo(this.map);
+    this.map = L.map('map', {}).setView([46.6, 2.4], 6);
 
     this.roadLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
     });
 
     this.satelliteLayer = L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       {
         maxZoom: 19,
-        attribution: 'Imagery &copy; Esri and its imagery providers',
       },
     );
 
@@ -80,7 +75,7 @@ export class MapComponent implements AfterViewInit, OnDestroy {
           this.marker.setLatLng(location);
         } else {
           this.marker = L.circleMarker(location, {
-            radius: 8,
+            radius: 15,
             color: '#ffffff',
             weight: 3,
             fillColor: '#1677ff',
