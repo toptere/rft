@@ -1,0 +1,106 @@
+
+:host {
+  display: block;
+  height: 100%;
+}
+
+.map-component {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #f5f7fa;
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 18px;
+  background: #17212b;
+  color: white;
+  z-index: 1000;
+}
+
+.brand,
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-icon {
+  font-size: 30px;
+}
+
+h1 {
+  font-size: 18px;
+  margin: 0;
+}
+
+.brand p {
+  font-size: 12px;
+  margin: 4px 0 0;
+  color: #c4d0dc;
+}
+
+.actions button {
+  border: 1px solid #536170;
+  border-radius: 8px;
+  padding: 9px 13px;
+  color: white;
+  background: transparent;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.actions button.active {
+  color: #17212b;
+  background: white;
+  border-color: white;
+}
+
+.actions button.locate {
+  font-size: 22px;
+  padding: 4px 10px;
+}
+
+.map-container {
+  flex: 1;
+  min-height: 0;
+}
+
+#map {
+  width: 100%;
+  height: 100%;
+}
+
+@media (max-width: 480px) {
+  .toolbar {
+    padding: 10px;
+    gap: 8px;
+  }
+
+  .brand {
+    gap: 6px;
+  }
+
+  h1 {
+    font-size: 15px;
+  }
+
+  .brand p {
+    max-width: 125px;
+    font-size: 10px;
+  }
+
+  .actions {
+    gap: 5px;
+  }
+
+  .actions button {
+    padding: 8px;
+    font-size: 12px;
+  }
+}
