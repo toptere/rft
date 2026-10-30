@@ -36,7 +36,6 @@ export class AuthService {
     if (error) throw error;
   }
 
-  // TODO - Magos - $date("Y-MM-d, H:m")$ -
   async signOut(): Promise<void> {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
