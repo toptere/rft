@@ -15,6 +15,15 @@ import { UserWithLocation } from '../models';
         flex: 1;
         min-height: 0;
       }
+      :host ::ng-deep .leaflet-control-zoom a {
+        width: 44px;
+        height: 44px;
+        line-height: 42px;
+        font-size: 24px;
+      }
+      :host ::ng-deep .leaflet-control-attribution {
+        font-size: 9px;
+      }
       .map {
         position: absolute;
         inset: 0;
@@ -95,7 +104,7 @@ export class MapComponent implements AfterViewInit, OnChanges, OnDestroy {
     }
     if (changes['centerOnLocation']) {
       this.centerOnCurrentUser();
-      console.log("Centered on user location");
+      console.log('Centered on user location');
     }
     this.syncMarkers();
   }

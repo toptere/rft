@@ -32,66 +32,54 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
   styles: [
     `
       .header {
-        position: relative;
-        z-index: 1000;
-        display: flex;
+        display: grid;
+        grid-template-columns: 44px minmax(0, 1fr) 64px;
         align-items: center;
-        gap: 12px;
-        min-height: 66px;
-        padding: 8px 12px;
+        gap: 7px;
+        padding: max(8px, env(safe-area-inset-top)) 8px 8px;
         background: #17212b;
-        color: #fff;
-        font:
-          13px Arial,
-          sans-serif;
+        color: white;
       }
-      button {
-        color: inherit;
-        background: #263746;
-        border: 1px solid #526372;
-        border-radius: 7px;
-        padding: 10px;
-        cursor: pointer;
-        white-space: nowrap;
-      }
+
       .readouts {
-        flex: 1;
-        display: flex;
-        justify-content: center;
-        gap: clamp(10px, 3vw, 36px);
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 7px;
         min-width: 0;
       }
+
       .readouts div {
         display: grid;
         gap: 3px;
         min-width: 0;
       }
-      span,
-      small {
-        color: #d1dbe4;
+
+      .readouts span {
         overflow-wrap: anywhere;
+        font-size: 10px;
+        font-variant-numeric: tabular-nums;
       }
-      b {
-        font-size: 12px;
+
+      .header button {
+        min-width: 44px;
+        min-height: 44px;
+        padding: 6px;
+        border-radius: 9px;
+        touch-action: manipulation;
       }
-      small {
-        font-size: 11px;
-      }
-      @media (max-width: 600px) {
+
+      @media (min-width: 641px) {
         .header {
-          gap: 6px;
-          padding: 7px;
+          display: flex;
+          min-height: 66px;
+          padding: 8px 12px;
         }
+
         .readouts {
-          gap: 8px;
-          font-size: 10px;
-        }
-        .readouts div {
-          max-width: 42%;
-        }
-        button {
-          padding: 8px;
-          font-size: 11px;
+          flex: 1;
+          display: flex;
+          justify-content: center;
+          gap: 24px;
         }
       }
     `,
