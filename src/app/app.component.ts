@@ -2,30 +2,35 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { AuthService } from './services/auth.service';
 import { LocationService } from './services/location.service';
-import { UserWithLocation } from './models';
+import { LayerMode, UserWithLocation } from './models';
 import { LoginComponent } from './login/login.component';
 import { HeaderComponent } from './header/header.component';
-import { SidebarComponent } from './sidebar/sidebar.component';
+import { OobSidebarComponent } from './oob-sidebar/oob-sidebar.component';
 import { MapComponent } from './map/map.component';
+import { SettingsSidebarComponent } from './settings-sidebar/settings-sidebar.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [LoginComponent, HeaderComponent, SidebarComponent, MapComponent],
+  imports: [
+    LoginComponent,
+    HeaderComponent,
+    OobSidebarComponent,
+    SettingsSidebarComponent,
+    MapComponent,
+  ],
   template: `
     @if (!signedIn) {
       <app-login (loggedIn)="onLoggedIn()"></app-login>
     } @else {
       <main class="app-shell">
         <app-header
-          [currentCoordinates]="currentCoordinates"
-          [accuracyText]="accuracyText"
-          [centerCoordinates]="centerCoordinates"
-          [satellite]="satellite"
-          (sidebarToggle)="sidebarOpen = !sidebarOpen"
-          (logoutToggle)="onLogout()"
-          (layerToggle)="satellite = !satellite"
-          (centerOnLocation)="centerOnLocation = !centerOnLocation"
+          [userLatitude]="currentLatitude"
+          [userLongitude]="currentLongitude"
+          [reticuleLatitude]="currentReticuleLatitude"
+          [reticuleLongitude]="currentReticuleLongitude"
+          (oobSidebarToggle)="oobSidebarOpen = !oobSidebarOpen"
+          (settingsSidebarToggle)="settingsSidebarOpen = !settingsSidebarOpen"
         >
         </app-header>
         <section class="map-area">
@@ -33,18 +38,30 @@ import { MapComponent } from './map/map.component';
             [users]="users"
             [currentUserId]="currentUserId"
             [visibility]="visibility"
-            [satellite]="satellite"
+            [layerMode]="currentLayerMode"
             [centerOnLocation]="centerOnLocation"
             (centerChanged)="onCenterChanged($event)"
           ></app-map>
-          <app-sidebar
-            [open]="sidebarOpen"
+          <app-oob-sidebar
+            [open]="oobSidebarOpen"
             [users]="users"
             [visibility]="visibility"
-            (close)="sidebarOpen = false"
+            (close)="oobSidebarOpen = false"
             (visibilityChange)="setVisibility($event.id, $event.visible)"
           >
-          </app-sidebar>
+          </app-oob-sidebar>
+          <app-settings-sidebar
+            [isOpen]="settingsSidebarOpen"
+            [userEmail]="currentUserEmail"
+            [latitude]="currentLatitude"
+            [longitude]="currentLongitude"
+            [accuracy]="currentAccuracy"
+            [layerMode]="currentLayerMode"
+            (close)="settingsSidebarOpen = false"
+            (toggleLayer)="onToggleMapLayer($event)"
+            (logout)="onLogout()"
+          >
+          </app-settings-sidebar>
         </section>
         @if (gpsError) {
           <div class="gps-error">{{ gpsError }}</div>
@@ -92,18 +109,30 @@ import { MapComponent } from './map/map.component';
 })
 export class AppComponent implements OnInit, OnDestroy {
   signedIn = false;
-  satellite = false;
-  sidebarOpen = false;
-  centerOnLocation = false;
+  currentUserId: string | null = null;
+  currentUserEmail: string | undefined = undefined;
   users: UserWithLocation[] = [];
   visibility: Record<string, boolean> = {};
+
+  currentLatitude: number | undefined = undefined;
+  currentLongitude: number | undefined = undefined;
+  currentAccuracy: number | undefined = undefined;
+
   currentCoordinates = 'Waiting for GPS…';
   accuracyText = '';
-  centerCoordinates = '—';
   gpsError = '';
+
+  centerCoordinates = '—';
+  currentReticuleLatitude: number | undefined = undefined;
+  currentReticuleLongitude: number | undefined = undefined;
+
+  currentLayerMode: LayerMode = LayerMode.ROAD;
+  oobSidebarOpen = false;
+  settingsSidebarOpen = false;
+  centerOnLocation = false;
+
   private watchId: number | null = null;
   private subs = new Subscription();
-  currentUserId: string | null = null;
   private initializedForUserId: string | null = null;
 
   constructor(
@@ -124,6 +153,7 @@ export class AppComponent implements OnInit, OnDestroy {
       this.auth.user$.subscribe((user) => {
         if (user) {
           this.currentUserId = user.id;
+          this.currentUserEmail = user.email;
           this.signedIn = true;
           if (this.initializedForUserId !== user.id) {
             this.initializedForUserId = user.id;
@@ -163,6 +193,11 @@ export class AppComponent implements OnInit, OnDestroy {
     this.watchId = navigator.geolocation.watchPosition(
       (position) => {
         const { latitude, longitude, accuracy } = position.coords;
+
+        this.currentLatitude = latitude;
+        this.currentLongitude = longitude;
+        this.currentAccuracy = accuracy;
+
         this.currentCoordinates = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
         this.accuracyText = `Accuracy ±${Math.round(accuracy)} m`;
         this.gpsError = '';
@@ -182,11 +217,24 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   onCenterChanged(center: { lat: number; lng: number }): void {
+    this.currentReticuleLatitude = center.lat;
+    this.currentReticuleLongitude = center.lng;
     this.centerCoordinates = `${center.lat.toFixed(5)}, ${center.lng.toFixed(5)}`;
   }
 
+  onToggleMapLayer(layerMode: LayerMode): void {
+    this.currentLayerMode = layerMode;
+  }
+
   onLogout(): void {
-    this.auth.signOut().catch((reason) => console.error(reason));
+    this.auth
+      .signOut()
+      .catch((reason) => console.error(reason))
+      .finally(() => {
+        this.currentUserId = null;
+        this.currentUserEmail = undefined;
+        this.currentCoordinates = '';
+      });
   }
 
   setVisibility(id: string, visible: boolean): void {

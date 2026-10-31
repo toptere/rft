@@ -3,25 +3,25 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { UserWithLocation } from '../models';
 
 @Component({
-  selector: 'app-sidebar',
+  selector: 'app-oob-sidebar',
   standalone: true,
   imports: [DatePipe, DecimalPipe],
   template: `
     <aside class="sidebar" [class.open]="open">
       <div class="title">
-        <h2>Users</h2>
+        <h2>ODB</h2>
         <button (click)="close.emit()" aria-label="Close user list">×</button>
       </div>
       @for (user of users; track user.id) {
         <article class="user">
           <label class="name"
-            ><input
-              type="checkbox"
-              [checked]="visibility[user.id] !== false"
-              (change)="
+          ><input
+            type="checkbox"
+            [checked]="visibility[user.id]"
+            (change)="
                 visibilityChange.emit({ id: user.id, visible: $any($event.target).checked })
               "
-            /><b>{{ user.username }}</b></label
+          /><b>{{ user.username }}</b></label
           >
           @if (user.location; as loc) {
             <div>{{ loc.latitude | number: '1.5-5' }}, {{ loc.longitude | number: '1.5-5' }}</div>
@@ -116,7 +116,7 @@ import { UserWithLocation } from '../models';
     `,
   ],
 })
-export class SidebarComponent {
+export class OobSidebarComponent {
   @Input() open = false;
   @Input() users: UserWithLocation[] = [];
   @Input() visibility: Record<string, boolean> = {};

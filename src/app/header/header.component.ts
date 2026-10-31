@@ -1,39 +1,42 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { LatLongFormatPipe } from '../pipes/lat-long-format.pipe';
 
 @Component({
   selector: 'app-header',
   standalone: true,
+  imports: [LatLongFormatPipe],
   template: `
     <header class="header">
-      <button class="menu" (click)="sidebarToggle.emit()" aria-label="Toggle user list">☰</button>
-      <button class="menu" (click)="logoutToggle.emit()" aria-label="Sign user out">Logout</button>
-      <div class="readouts">
-        <div>
-          <b>My location</b><span>{{ currentCoordinates }}</span
-          ><small>{{ accuracyText }}</small>
-        </div>
-        <div>
-          <b>Reticule</b><span>{{ centerCoordinates }}</span>
-        </div>
-      </div>
-      <button class="layer" (click)="layerToggle.emit()">
-        {{ satellite ? 'Road map' : 'Satellite' }}
-      </button>
       <button
-        class="locate"
-        (click)="centerOnLocation.emit()"
-        aria-label="Find my location"
-        title="Find my location"
+        class="sidebar-toggle"
+        (click)="oobSidebarToggle.emit()"
+        aria-label="Toggle user list"
       >
-        ⊙
+        OB
+      </button>
+      <span class="reticule-distance">
+        {{ reticuleLatitude | latLongFormat }}
+      </span>
+      <span class="reticule-distance">
+        {{ reticuleLongitude | latLongFormat }}
+      </span>
+      <span class="reticule-distance">
+        {{ distanceToReticule ? distanceToReticule + ' m' : '—' }}
+      </span>
+      <button
+        class="sidebar-toggle"
+        (click)="settingsSidebarToggle.emit()"
+        aria-label="Open user menu"
+      >
+        ☰
       </button>
     </header>
   `,
   styles: [
     `
       .header {
-        display: grid;
-        grid-template-columns: 44px minmax(0, 1fr) 64px;
+        display: flex;
+        justify-content: space-between;
         align-items: center;
         gap: 7px;
         padding: max(8px, env(safe-area-inset-top)) 8px 8px;
@@ -68,6 +71,18 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
         touch-action: manipulation;
       }
 
+      .reticule-distance {
+        white-space: nowrap;
+        font-weight: 600;
+      }
+
+      .sidebar-toggle {
+        min-width: 44px;
+        min-height: 44px;
+        font-size: 22px;
+        flex-shrink: 0;
+      }
+
       @media (min-width: 641px) {
         .header {
           display: flex;
@@ -86,12 +101,35 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
   ],
 })
 export class HeaderComponent {
-  @Input() currentCoordinates = 'Waiting for GPS…';
-  @Input() accuracyText = '';
-  @Input() centerCoordinates = '—';
-  @Input() satellite = false;
-  @Output() sidebarToggle = new EventEmitter<void>();
-  @Output() logoutToggle = new EventEmitter<void>();
-  @Output() layerToggle = new EventEmitter<void>();
-  @Output() centerOnLocation = new EventEmitter<void>();
+  @Input() userLatitude: number | undefined = undefined;
+  @Input() userLongitude: number | undefined = undefined;
+  @Input() reticuleLatitude: number | undefined = undefined;
+  @Input() reticuleLongitude: number | undefined = undefined;
+
+  @Output() oobSidebarToggle = new EventEmitter<void>();
+  @Output() settingsSidebarToggle = new EventEmitter<void>();
+
+  get distanceToReticule(): number | undefined {
+    if (
+      this.userLatitude &&
+      this.userLongitude &&
+      this.reticuleLatitude &&
+      this.reticuleLongitude
+    ) {
+      const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
+      const earthRadius = 6371000;
+
+      const lat1 = toRadians(this.userLatitude);
+      const lat2 = toRadians(this.reticuleLatitude);
+      const deltaLat = toRadians(this.reticuleLatitude - this.userLatitude);
+      const deltaLng = toRadians(this.reticuleLongitude - this.userLongitude);
+
+      const a =
+        Math.sin(deltaLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLng / 2) ** 2;
+
+      return Math.round(earthRadius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+    } else {
+      return;
+    }
+  }
 }

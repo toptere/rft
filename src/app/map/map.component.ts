@@ -1,11 +1,31 @@
-import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnChanges, OnDestroy, Output, SimpleChanges, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnDestroy,
+  Output,
+  SimpleChanges,
+  ViewChild,
+} from '@angular/core';
 import * as L from 'leaflet';
-import { UserWithLocation } from '../models';
+import { LayerMode, UserWithLocation } from '../models';
 
 @Component({
   selector: 'app-map',
   standalone: true,
-  template: `<div #mapHost class="map"></div>
+  template: ` <div #mapHost class="map">
+      <button
+        class="center-map-button"
+        (click)="centerOnCurrentUser()"
+        aria-label="Center map on my location"
+        title="Center map on my location"
+      >
+        ◎
+      </button>
+    </div>
     <div class="reticule" aria-hidden="true"><span></span><i></i></div>`,
   styles: [
     `
@@ -15,19 +35,25 @@ import { UserWithLocation } from '../models';
         flex: 1;
         min-height: 0;
       }
+
       :host ::ng-deep .leaflet-control-zoom a {
         width: 44px;
         height: 44px;
         line-height: 42px;
         font-size: 24px;
       }
+
       :host ::ng-deep .leaflet-control-attribution {
         font-size: 9px;
       }
+
       .map {
-        position: absolute;
         inset: 0;
+        position: relative;
+        width: 100%;
+        height: 100%;
       }
+
       .reticule {
         pointer-events: none;
         position: absolute;
@@ -38,6 +64,7 @@ import { UserWithLocation } from '../models';
         height: 28px;
         transform: translate(-50%, -50%);
       }
+
       .reticule span,
       .reticule i {
         position: absolute;
@@ -45,17 +72,40 @@ import { UserWithLocation } from '../models';
         background: #111;
         box-shadow: 0 0 2px white;
       }
+
       .reticule span {
         width: 28px;
         height: 2px;
         left: 0;
         top: 13px;
       }
+
       .reticule i {
         width: 2px;
         height: 28px;
         left: 13px;
         top: 0;
+      }
+
+      .center-map-button {
+        position: absolute;
+        z-index: 1000;
+        right: 12px;
+        bottom: 35px;
+        width: 48px;
+        height: 48px;
+        border: 0;
+        border-radius: 50%;
+        background: white;
+        color: #222;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+        font-size: 28px;
+        cursor: pointer;
+        touch-action: manipulation;
+      }
+
+      .center-map-button:active {
+        background: #eee;
       }
     `,
   ],
@@ -65,7 +115,7 @@ export class MapComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() users: UserWithLocation[] = [];
   @Input() currentUserId: string | null = null;
   @Input() visibility: Record<string, boolean> = {};
-  @Input() satellite = false;
+  @Input() layerMode: LayerMode = LayerMode.ROAD;
   @Input() centerOnLocation = false;
   @Output() centerChanged = new EventEmitter<{ lat: number; lng: number }>();
 
@@ -86,7 +136,15 @@ export class MapComponent implements AfterViewInit, OnChanges, OnDestroy {
         maxZoom: 19,
       },
     );
-    (this.satellite ? this.imagery : this.road).addTo(this.map);
+    (this.layerMode === LayerMode.SATELLITE ? this.imagery : this.road).addTo(this.map);
+    L.control
+      .scale({
+        position: 'bottomleft',
+        metric: true,
+        imperial: false,
+        maxWidth: 120,
+      })
+      .addTo(this.map);
     this.map.on('move', () => {
       const c = this.map!.getCenter();
       this.centerChanged.emit({ lat: c.lat, lng: c.lng });
@@ -97,10 +155,10 @@ export class MapComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (!this.map) return;
-    if (changes['satellite']) {
+    if (changes['layerMode']) {
       this.road?.remove();
       this.imagery?.remove();
-      (this.satellite ? this.imagery : this.road)?.addTo(this.map);
+      (this.layerMode === LayerMode.SATELLITE ? this.imagery : this.road)?.addTo(this.map);
     }
     if (changes['centerOnLocation']) {
       this.centerOnCurrentUser();
@@ -162,7 +220,7 @@ export class MapComponent implements AfterViewInit, OnChanges, OnDestroy {
       if (user.id === this.currentUserId) {
         const loc = user.location;
         if (loc) {
-          this.map.setView([loc.latitude, loc.longitude], 14);
+          this.centerOn(loc.latitude, loc.longitude);
         }
         break;
       }
