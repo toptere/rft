@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { AuthService } from './services/auth.service';
 import { LocationService } from './services/location.service';
-import { LayerMode, UserWithLocation } from './models';
+import { LatLongLocation, LayerMode, UserWithLocation } from './models';
 import { LoginComponent } from './login/login.component';
 import { HeaderComponent } from './header/header.component';
 import { OobSidebarComponent } from './oob-sidebar/oob-sidebar.component';
@@ -48,6 +48,7 @@ import { SettingsSidebarComponent } from './settings-sidebar/settings-sidebar.co
             [visibility]="visibility"
             (close)="oobSidebarOpen = false"
             (visibilityChange)="setVisibility($event.id, $event.visible)"
+            (centerOnLocation)="onCenterOnLocation($event)"
           >
           </app-oob-sidebar>
           <app-settings-sidebar
@@ -129,7 +130,7 @@ export class AppComponent implements OnInit, OnDestroy {
   currentLayerMode: LayerMode = LayerMode.ROAD;
   oobSidebarOpen = false;
   settingsSidebarOpen = false;
-  centerOnLocation = false;
+  centerOnLocation: LatLongLocation | undefined = undefined;
 
   private watchId: number | null = null;
   private subs = new Subscription();
@@ -239,6 +240,10 @@ export class AppComponent implements OnInit, OnDestroy {
 
   setVisibility(id: string, visible: boolean): void {
     this.visibility = { ...this.visibility, [id]: visible };
+  }
+
+  onCenterOnLocation(latLongLocation: LatLongLocation): void {
+    this.centerOnLocation = latLongLocation;
   }
 
   private stopTracking(): void {

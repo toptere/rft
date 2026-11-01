@@ -13,7 +13,6 @@ import { EmailToUsernamePipe } from '../pipes/email-to-username.pipe';
     <aside class="settings-sidebar" [class.open]="isOpen">
       <div class="sidebar-header">
         <h2>{{ userEmail | emailToUsername }}</h2>
-        <button class="close-button" (click)="close.emit()" aria-label="Close sidebar">×</button>
       </div>
 
       <section class="location-info">
@@ -76,14 +75,6 @@ import { EmailToUsernamePipe } from '../pipes/email-to-username.pipe';
         display: flex;
         align-items: center;
         justify-content: space-between;
-      }
-
-      .close-button {
-        border: 0;
-        background: none;
-        font-size: 28px;
-        min-width: 44px;
-        min-height: 44px;
       }
 
       .location-info {

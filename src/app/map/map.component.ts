@@ -11,7 +11,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import * as L from 'leaflet';
-import { LayerMode, UserWithLocation } from '../models';
+import { LatLongLocation, LayerMode, UserWithLocation } from '../models';
 
 @Component({
   selector: 'app-map',
@@ -116,7 +116,7 @@ export class MapComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() currentUserId: string | null = null;
   @Input() visibility: Record<string, boolean> = {};
   @Input() layerMode: LayerMode = LayerMode.ROAD;
-  @Input() centerOnLocation = false;
+  @Input() centerOnLocation: LatLongLocation | undefined = undefined;
   @Output() centerChanged = new EventEmitter<{ lat: number; lng: number }>();
 
   private map?: L.Map;
@@ -160,9 +160,8 @@ export class MapComponent implements AfterViewInit, OnChanges, OnDestroy {
       this.imagery?.remove();
       (this.layerMode === LayerMode.SATELLITE ? this.imagery : this.road)?.addTo(this.map);
     }
-    if (changes['centerOnLocation']) {
-      this.centerOnCurrentUser();
-      console.log('Centered on user location');
+    if (changes['centerOnLocation'] && this.centerOnLocation) {
+      this.centerOn(this.centerOnLocation.latitude, this.centerOnLocation.longitude);
     }
     this.syncMarkers();
   }

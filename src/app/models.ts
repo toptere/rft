@@ -18,3 +18,9 @@ export interface UserWithLocation extends UserProfile {
 export enum LayerMode {
   ROAD, SATELLITE
 }
+
+export interface LatLongLocation {
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+}
