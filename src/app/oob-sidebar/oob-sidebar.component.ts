@@ -25,7 +25,7 @@ import { LatLongLocation, UserLocation, UserWithLocation } from '../models';
             @if (user.location; as loc) {
               <div>{{ loc.latitude | number: '1.5-5' }}, {{ loc.longitude | number: '1.5-5' }}</div>
               <small>Accuracy: {{ loc.accuracy_m | number: '1.0-0' }} m</small>
-              <small>{{ loc.updated_at | date: 'medium' }}</small>
+              <small>{{ loc.updated_at | date: 'ddHHmm LLL yy' }}</small>
             } @else {
               <small>No location received yet</small>
             }
