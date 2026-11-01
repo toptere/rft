@@ -1,12 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { LayerMode } from '../models';
+import { LatLongLocation, LayerMode } from '../models';
 import { EmailToUsernamePipe } from '../pipes/email-to-username.pipe';
+import { LatLongToUtmMgrsPipe } from '../pipes/lat-long-to-utm-mgrs.pipe';
 
 @Component({
   selector: 'app-settings-sidebar',
   standalone: true,
-  imports: [CommonModule, EmailToUsernamePipe],
+  imports: [CommonModule, EmailToUsernamePipe, LatLongToUtmMgrsPipe],
   template: `
     <div class="sidebar-backdrop" *ngIf="isOpen" (click)="close.emit()"></div>
 
@@ -15,26 +16,24 @@ import { EmailToUsernamePipe } from '../pipes/email-to-username.pipe';
         <h2>{{ userEmail | emailToUsername }}</h2>
       </div>
 
-      <section class="location-info">
-        <div>
-          <strong>Latitude:</strong>
-          {{ latitude?.toFixed(6) ?? '—' }}
-        </div>
-        <div>
-          <strong>Longitude:</strong>
-          {{ longitude?.toFixed(6) ?? '—' }}
-        </div>
-        <div>
-          <strong>Accuracy:</strong>
-          {{ accuracy !== null ? (accuracy | number: '1.0-0') + ' m' : '—' }}
-        </div>
-      </section>
+      <div class="sections">
+        <section class="location-info">
+          <div class="info">
+            <strong>Coordinates:</strong><br />
+            {{ userLocation | latLongToUtmMgrs }}
+          </div>
+          <div class="info">
+            <strong>Accuracy:</strong><br />
+            {{ userLocation ? (userLocation.accuracy | number: '1.0-0') + ' m' : '—' }}
+          </div>
+        </section>
 
-      <section class="sidebar-layer">
-        <button (click)="switchLayerAndClose()">
-          Switch to {{ layerMode === LayerMode.ROAD ? 'satellite' : 'road' }} map
-        </button>
-      </section>
+        <section class="sidebar-layer">
+          <button class="layer-button" (click)="switchLayerAndClose()">
+            Switch to {{ layerMode === LayerMode.ROAD ? 'satellite' : 'road' }} map
+          </button>
+        </section>
+      </div>
 
       <div class="sidebar-footer">
         <button class="logout-button" (click)="logoutAndClose()">Log out</button>
@@ -77,18 +76,31 @@ import { EmailToUsernamePipe } from '../pipes/email-to-username.pipe';
         justify-content: space-between;
       }
 
-      .location-info {
-        padding: 20px 0;
-        line-height: 2;
-        overflow-wrap: anywhere;
-      }
+      .sections {
+        display: flex;
+        flex-direction: column;
+        margin-top: 20px;
 
-      .sidebar-layer button,
-      .logout-button {
-        width: 100%;
-        min-height: 48px;
-        padding: 10px;
-        font-size: 16px;
+        .location-info {
+          padding: 10px 0;
+          line-height: 2;
+          overflow-wrap: anywhere;
+
+          .info {
+            padding: 10px 0 10px 0;
+          }
+        }
+
+        .sidebar-layer {
+          padding: 20px 20px;
+        }
+
+        .layer-button {
+          width: 100%;
+          min-height: 48px;
+          padding: 10px;
+          font-size: 16px;
+        }
       }
 
       .sidebar-footer {
@@ -98,6 +110,10 @@ import { EmailToUsernamePipe } from '../pipes/email-to-username.pipe';
 
       .logout-button {
         background: #c62828;
+        width: 100%;
+        min-height: 48px;
+        padding: 10px;
+        font-size: 16px;
         color: white;
         border: 0;
         border-radius: 5px;
@@ -108,9 +124,7 @@ import { EmailToUsernamePipe } from '../pipes/email-to-username.pipe';
 export class SettingsSidebarComponent {
   @Input() isOpen = false;
   @Input() userEmail: string | undefined = '';
-  @Input() latitude: number | undefined = undefined;
-  @Input() longitude: number | undefined = undefined;
-  @Input() accuracy: number | undefined = undefined;
+  @Input() userLocation: LatLongLocation | undefined = undefined;
   @Input() layerMode: LayerMode | undefined = LayerMode.ROAD;
 
   @Output() close = new EventEmitter<void>();

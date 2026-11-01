@@ -1,10 +1,14 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { LatLongFormatPipe } from '../pipes/lat-long-format.pipe';
+import { LatLongToUtmMgrsPipe } from '../pipes/lat-long-to-utm-mgrs.pipe';
+import { LatLongLocation } from '../models';
+
+const TO_RADIANS = (degrees: number) => (degrees * Math.PI) / 180;
+const EARTH_RADIUS = 6371000;
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [LatLongFormatPipe],
+  imports: [LatLongToUtmMgrsPipe],
   template: `
     <header class="header">
       <button
@@ -14,15 +18,13 @@ import { LatLongFormatPipe } from '../pipes/lat-long-format.pipe';
       >
         OB
       </button>
-      <span class="reticule-distance">
-        {{ reticuleLatitude | latLongFormat }}
-      </span>
-      <span class="reticule-distance">
-        {{ reticuleLongitude | latLongFormat }}
-      </span>
-      <span class="reticule-distance">
-        {{ distanceToReticule ? distanceToReticule + ' m' : '—' }}
-      </span>
+      <div class="reticule">
+        <span class="coordinates">
+          {{ reticuleLocation | latLongToUtmMgrs }}
+        </span>
+        -
+        <span class="info"> {{ distanceToReticule }} {{ millsToReticule }} </span>
+      </div>
       <button
         class="sidebar-toggle"
         (click)="settingsSidebarToggle.emit()"
@@ -71,9 +73,11 @@ import { LatLongFormatPipe } from '../pipes/lat-long-format.pipe';
         touch-action: manipulation;
       }
 
-      .reticule-distance {
-        white-space: nowrap;
-        font-weight: 600;
+      .reticule {
+        white-space: wrap;
+        .coordinates {
+          font-weight: 600;
+        }
       }
 
       .sidebar-toggle {
@@ -101,35 +105,62 @@ import { LatLongFormatPipe } from '../pipes/lat-long-format.pipe';
   ],
 })
 export class HeaderComponent {
-  @Input() userLatitude: number | undefined = undefined;
-  @Input() userLongitude: number | undefined = undefined;
-  @Input() reticuleLatitude: number | undefined = undefined;
-  @Input() reticuleLongitude: number | undefined = undefined;
+  @Input() userLocation: LatLongLocation | undefined = undefined;
+  @Input() reticuleLocation: LatLongLocation | undefined = undefined;
 
   @Output() oobSidebarToggle = new EventEmitter<void>();
   @Output() settingsSidebarToggle = new EventEmitter<void>();
 
-  get distanceToReticule(): number | undefined {
-    if (
-      this.userLatitude &&
-      this.userLongitude &&
-      this.reticuleLatitude &&
-      this.reticuleLongitude
-    ) {
-      const toRadians = (degrees: number) => (degrees * Math.PI) / 180;
-      const earthRadius = 6371000;
-
-      const lat1 = toRadians(this.userLatitude);
-      const lat2 = toRadians(this.reticuleLatitude);
-      const deltaLat = toRadians(this.reticuleLatitude - this.userLatitude);
-      const deltaLng = toRadians(this.reticuleLongitude - this.userLongitude);
+  get distanceToReticule(): string {
+    if (this.userLocation && this.reticuleLocation) {
+      const lat1 = TO_RADIANS(this.userLocation.latitude);
+      const lat2 = TO_RADIANS(this.reticuleLocation.latitude);
+      const deltaLat = TO_RADIANS(this.reticuleLocation.latitude - this.userLocation.latitude);
+      const deltaLng = TO_RADIANS(this.reticuleLocation.longitude - this.userLocation.longitude);
 
       const a =
         Math.sin(deltaLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLng / 2) ** 2;
 
-      return Math.round(earthRadius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)));
+      const distance: number = Math.round(
+        EARTH_RADIUS * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)),
+      );
+      return distance + 'm';
     } else {
-      return;
+      return '-';
+    }
+  }
+
+  get millsToReticule(): string {
+    if (this.userLocation && this.reticuleLocation) {
+      // Identical coordinates have no defined bearing.
+      if (
+        this.userLocation.latitude === this.reticuleLocation.latitude &&
+        this.userLocation.longitude === this.reticuleLocation.longitude
+      ) {
+        return '-';
+      }
+      const lat1: number = TO_RADIANS(this.userLocation.latitude);
+      const lat2: number = TO_RADIANS(this.reticuleLocation.latitude);
+      const deltaLongitude: number = TO_RADIANS(
+        this.reticuleLocation.longitude - this.userLocation.longitude,
+      );
+
+      // Calculate initial bearing.
+      const y: number = Math.sin(deltaLongitude) * Math.cos(lat2);
+      const x: number =
+        Math.cos(lat1) * Math.sin(lat2) -
+        Math.sin(lat1) * Math.cos(lat2) * Math.cos(deltaLongitude);
+
+      const bearing: number = Math.atan2(y, x);
+
+      // Normalize bearing to 0–360 degrees.
+      const degrees: number = ((bearing * 180) / Math.PI + 360) % 360;
+      // Convert degrees to NATO mils (6400 mils per circle).
+      const mils: number = Math.round(degrees * (6400 / 360)) % 6400;
+
+      return `${mils}mil`;
+    } else {
+      return '-';
     }
   }
 }

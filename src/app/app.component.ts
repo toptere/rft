@@ -25,10 +25,8 @@ import { SettingsSidebarComponent } from './settings-sidebar/settings-sidebar.co
     } @else {
       <main class="app-shell">
         <app-header
-          [userLatitude]="currentLatitude"
-          [userLongitude]="currentLongitude"
-          [reticuleLatitude]="currentReticuleLatitude"
-          [reticuleLongitude]="currentReticuleLongitude"
+          [userLocation]="currentUserLocation"
+          [reticuleLocation]="currentReticuleLocation"
           (oobSidebarToggle)="oobSidebarOpen = !oobSidebarOpen"
           (settingsSidebarToggle)="settingsSidebarOpen = !settingsSidebarOpen"
         >
@@ -54,9 +52,7 @@ import { SettingsSidebarComponent } from './settings-sidebar/settings-sidebar.co
           <app-settings-sidebar
             [isOpen]="settingsSidebarOpen"
             [userEmail]="currentUserEmail"
-            [latitude]="currentLatitude"
-            [longitude]="currentLongitude"
-            [accuracy]="currentAccuracy"
+            [userLocation]="currentUserLocation"
             [layerMode]="currentLayerMode"
             (close)="settingsSidebarOpen = false"
             (toggleLayer)="onToggleMapLayer($event)"
@@ -115,17 +111,10 @@ export class AppComponent implements OnInit, OnDestroy {
   users: UserWithLocation[] = [];
   visibility: Record<string, boolean> = {};
 
-  currentLatitude: number | undefined = undefined;
-  currentLongitude: number | undefined = undefined;
-  currentAccuracy: number | undefined = undefined;
+  currentUserLocation: LatLongLocation | undefined = undefined;
+  currentReticuleLocation: LatLongLocation | undefined = undefined;
 
-  currentCoordinates = 'Waiting for GPS…';
-  accuracyText = '';
   gpsError = '';
-
-  centerCoordinates = '—';
-  currentReticuleLatitude: number | undefined = undefined;
-  currentReticuleLongitude: number | undefined = undefined;
 
   currentLayerMode: LayerMode = LayerMode.ROAD;
   oobSidebarOpen = false;
@@ -195,12 +184,8 @@ export class AppComponent implements OnInit, OnDestroy {
       (position) => {
         const { latitude, longitude, accuracy } = position.coords;
 
-        this.currentLatitude = latitude;
-        this.currentLongitude = longitude;
-        this.currentAccuracy = accuracy;
-
-        this.currentCoordinates = `${latitude.toFixed(5)}, ${longitude.toFixed(5)}`;
-        this.accuracyText = `Accuracy ±${Math.round(accuracy)} m`;
+        this.currentUserLocation = { latitude, longitude, accuracy };
+        this.currentReticuleLocation = { latitude, longitude };
         this.gpsError = '';
         if (this.currentUserId) {
           void this.locations
@@ -218,9 +203,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   onCenterChanged(center: { lat: number; lng: number }): void {
-    this.currentReticuleLatitude = center.lat;
-    this.currentReticuleLongitude = center.lng;
-    this.centerCoordinates = `${center.lat.toFixed(5)}, ${center.lng.toFixed(5)}`;
+    this.currentReticuleLocation = { latitude: center.lat, longitude: center.lng };
   }
 
   onToggleMapLayer(layerMode: LayerMode): void {
@@ -234,7 +217,8 @@ export class AppComponent implements OnInit, OnDestroy {
       .finally(() => {
         this.currentUserId = null;
         this.currentUserEmail = undefined;
-        this.currentCoordinates = '';
+        this.currentUserLocation = undefined;
+        this.currentReticuleLocation = undefined;
       });
   }
 

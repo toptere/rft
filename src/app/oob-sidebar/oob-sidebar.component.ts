@@ -1,11 +1,12 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { LatLongLocation, UserLocation, UserWithLocation } from '../models';
+import { LatLongToUtmMgrsPipe } from '../pipes/lat-long-to-utm-mgrs.pipe';
 
 @Component({
   selector: 'app-oob-sidebar',
   standalone: true,
-  imports: [DatePipe, DecimalPipe],
+  imports: [DatePipe, DecimalPipe, LatLongToUtmMgrsPipe],
   template: `
     <aside class="sidebar" [class.open]="open">
       <div class="title">
@@ -23,11 +24,12 @@ import { LatLongLocation, UserLocation, UserWithLocation } from '../models';
               <b>{{ user.username }}</b>
             </label>
             @if (user.location; as loc) {
-              <div>{{ loc.latitude | number: '1.5-5' }}, {{ loc.longitude | number: '1.5-5' }}</div>
+              <div>
+                {{ { latitude: loc.latitude, longitude: loc.longitude } | latLongToUtmMgrs }}
+              </div>
               <small>Accuracy: {{ loc.accuracy_m | number: '1.0-0' }} m</small>
               <small
-                >{{ loc.updated_at | date: 'ddHHmm' }}L
-                {{ loc.updated_at | date: 'LLL yy' }}</small
+                >{{ loc.updated_at | date: 'ddHHmm' }}L {{ loc.updated_at | date: 'LLL yy' }}</small
               >
             } @else {
               <small>No location received yet</small>
