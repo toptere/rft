@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { UserLocation, UserWithLocation } from '../models';
+import { UserLocation, UserProfile, UserWithLocation } from '../models';
 import { supabase } from '../supabase.client';
 
 @Injectable({ providedIn: 'root' })
@@ -12,18 +12,25 @@ export class LocationService {
   async loadUsers(): Promise<void> {
     const [{ data: profiles, error: profileError }, { data: locations, error: locationError }] =
       await Promise.all([
-        supabase.from('profiles').select('id, username').order('username'),
-        supabase.from('locations').select('user_id, latitude, longitude, accuracy_m, updated_at')
+        supabase.from('profiles').select('id, username, hierarchy').order('hierarchy'),
+        supabase.from('locations').select('user_id, latitude, longitude, accuracy_m, updated_at'),
       ]);
     if (profileError) throw profileError;
     if (locationError) throw locationError;
 
-    const locationById = new Map((locations ?? []).map((loc) => [loc.user_id, loc as UserLocation]));
-    this.users$.next((profiles ?? []).map((profile) => ({
-      id: profile.id,
-      username: profile.username,
-      location: locationById.get(profile.id) ?? null
-    })));
+    const locationById = new Map(
+      (locations ?? []).map((loc) => [loc.user_id, loc as UserLocation]),
+    );
+    this.users$.next(
+      (profiles ?? [])
+        .map((profile): UserWithLocation => ({
+          id: profile.id,
+          username: profile.username,
+          location: locationById.get(profile.id) ?? null,
+          hierarchy: profile.hierarchy,
+        }))
+        .sort((u1, u2) => u1.hierarchy.localeCompare(u2.hierarchy)),
+    );
   }
 
   async publishMyLocation(userId: string, latitude: number, longitude: number, accuracy: number): Promise<void> {

@@ -32,6 +32,7 @@ import { LatLongLocation, UserLocation, UserWithLocation } from '../models';
           </div>
           <button
             (click)="centerOnUserLocation(user.location)"
+            [disabled]="!user.location"
             aria-label="Center on user location"
           >
             ◎
