@@ -114,6 +114,7 @@ export class MapComponent implements AfterViewInit, OnChanges, OnDestroy {
   @ViewChild('mapHost', { static: true }) mapHost!: ElementRef<HTMLDivElement>;
   @Input() users: UserWithLocation[] = [];
   @Input() currentUserId: string | null = null;
+  @Input() userLocation: LatLongLocation | undefined = undefined;
   @Input() visibility: Record<string, boolean> = {};
   @Input() layerMode: LayerMode = LayerMode.ROAD;
   @Input() centerOnLocation: LatLongLocation | undefined = undefined;
@@ -161,7 +162,7 @@ export class MapComponent implements AfterViewInit, OnChanges, OnDestroy {
       (this.layerMode === LayerMode.SATELLITE ? this.imagery : this.road)?.addTo(this.map);
     }
     if (changes['centerOnLocation'] && this.centerOnLocation) {
-      this.centerOn(this.centerOnLocation.latitude, this.centerOnLocation.longitude);
+      this.centerOn(this.centerOnLocation);
     }
     this.syncMarkers();
   }
@@ -214,20 +215,13 @@ export class MapComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   centerOnCurrentUser(): void {
-    if (!this.map) return;
-    for (const user of this.users) {
-      if (user.id === this.currentUserId) {
-        const loc = user.location;
-        if (loc) {
-          this.centerOn(loc.latitude, loc.longitude);
-        }
-        break;
-      }
+    if (this.map && this.userLocation) {
+      this.centerOn(this.userLocation);
     }
   }
 
-  centerOn(lat: number, lng: number): void {
-    this.map?.setView([lat, lng], Math.max(this.map.getZoom(), 14));
+  centerOn(location: LatLongLocation): void {
+    this.map?.setView([location.latitude, location.longitude], Math.max(this.map.getZoom(), 14));
   }
 
   ngOnDestroy(): void {

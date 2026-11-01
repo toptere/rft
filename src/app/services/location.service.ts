@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { UserLocation, UserProfile, UserWithLocation } from '../models';
+import { OBS, UserLocation, UserWithLocation } from '../models';
 import { supabase } from '../supabase.client';
 
 @Injectable({ providedIn: 'root' })
@@ -29,7 +29,10 @@ export class LocationService {
           location: locationById.get(profile.id) ?? null,
           hierarchy: profile.hierarchy,
         }))
-        .sort((u1, u2) => u1.hierarchy.localeCompare(u2.hierarchy)),
+        .filter((profile: UserWithLocation) => profile.username !== OBS)
+        .sort((u1: UserWithLocation, u2: UserWithLocation) =>
+          u1.hierarchy.localeCompare(u2.hierarchy),
+        ),
     );
   }
 

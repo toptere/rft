@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { AuthService } from './services/auth.service';
 import { LocationService } from './services/location.service';
-import { LatLongLocation, LayerMode, UserWithLocation } from './models';
+import { LatLongLocation, LayerMode, OBS_EMAIL, UserWithLocation } from './models';
 import { LoginComponent } from './login/login.component';
 import { HeaderComponent } from './header/header.component';
 import { OobSidebarComponent } from './oob-sidebar/oob-sidebar.component';
@@ -35,6 +35,7 @@ import { SettingsSidebarComponent } from './settings-sidebar/settings-sidebar.co
           <app-map
             [users]="users"
             [currentUserId]="currentUserId"
+            [userLocation]="currentUserLocation"
             [visibility]="visibility"
             [layerMode]="currentLayerMode"
             [centerOnLocation]="centerOnLocation"
@@ -187,7 +188,7 @@ export class AppComponent implements OnInit, OnDestroy {
         this.currentUserLocation = { latitude, longitude, accuracy };
         this.currentReticuleLocation = { latitude, longitude };
         this.gpsError = '';
-        if (this.currentUserId) {
+        if (this.currentUserId && this.currentUserEmail !== OBS_EMAIL) {
           void this.locations
             .publishMyLocation(this.currentUserId, latitude, longitude, accuracy)
             .catch(

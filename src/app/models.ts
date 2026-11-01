@@ -1,3 +1,7 @@
+// Special users
+export const OBS: string = 'obs';
+export const OBS_EMAIL: string = 'obs@rft.neb';
+
 export interface UserProfile {
   id: string;
   username: string;
