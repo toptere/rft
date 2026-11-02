@@ -113,7 +113,7 @@ import {
   ],
 })
 export class AppComponent implements OnInit, OnDestroy {
-  signedIn = false;
+  signedIn: boolean = false;
   currentUserId: string | null = null;
   currentUserEmail: string | undefined = undefined;
   users: UserWithLocation[] = [];
@@ -191,16 +191,21 @@ export class AppComponent implements OnInit, OnDestroy {
     this.watchId = navigator.geolocation.watchPosition(
       (position) => {
         const { latitude, longitude, accuracy } = position.coords;
-
-        this.currentUserLocation = { latitude, longitude, accuracy };
-        this.currentReticuleLocation = { latitude, longitude };
-        this.gpsError = '';
-        if (this.currentUserId && this.currentUserEmail !== OBS_EMAIL) {
-          void this.locations
-            .publishMyLocation(this.currentUserId, latitude, longitude, accuracy)
-            .catch(
-              (e) => (this.gpsError = e instanceof Error ? e.message : LOCATION_UPLOAD_FAILED),
-            );
+        const newLocation: LatLongLocation = { latitude, longitude, accuracy };
+        if (
+          this.currentUserLocation === undefined ||
+          this.locations.computeDistanceBetweenLocations(this.currentUserLocation, newLocation) > 10
+        ) {
+          this.currentUserLocation = newLocation;
+          this.currentReticuleLocation = { latitude, longitude };
+          this.gpsError = '';
+          if (this.currentUserId && this.currentUserEmail !== OBS_EMAIL) {
+            void this.locations
+              .publishMyLocation(this.currentUserId, latitude, longitude, accuracy)
+              .catch(
+                (e) => (this.gpsError = e instanceof Error ? e.message : LOCATION_UPLOAD_FAILED),
+              );
+          }
         }
       },
       (error) => {
