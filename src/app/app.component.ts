@@ -8,6 +8,13 @@ import { HeaderComponent } from './header/header.component';
 import { OobSidebarComponent } from './oob-sidebar/oob-sidebar.component';
 import { MapComponent } from './map/map.component';
 import { SettingsSidebarComponent } from './settings-sidebar/settings-sidebar.component';
+import {
+  BROWSER_NO_GEOLOCATION,
+  COULD_NOT_LOAD_USERS,
+  LOCATION_UPLOAD_FAILED,
+  UNABLE_OBTAIN_GPS_LOCATION,
+  WAITING_PERMISSION,
+} from '../resources/labels';
 
 @Component({
   selector: 'app-root',
@@ -170,17 +177,17 @@ export class AppComponent implements OnInit, OnDestroy {
       this.locations.startRealtime();
       this.startTracking();
     } catch (e) {
-      this.gpsError = e instanceof Error ? e.message : 'Could not load users.';
+      this.gpsError = e instanceof Error ? e.message : COULD_NOT_LOAD_USERS;
     }
   }
 
   private startTracking(): void {
     if (!navigator.geolocation) {
-      this.gpsError = 'This browser does not support geolocation.';
+      this.gpsError = BROWSER_NO_GEOLOCATION;
       return;
     }
     if (this.watchId !== null) return;
-    this.gpsError = 'Waiting for location permission…';
+    this.gpsError = WAITING_PERMISSION;
     this.watchId = navigator.geolocation.watchPosition(
       (position) => {
         const { latitude, longitude, accuracy } = position.coords;
@@ -192,12 +199,12 @@ export class AppComponent implements OnInit, OnDestroy {
           void this.locations
             .publishMyLocation(this.currentUserId, latitude, longitude, accuracy)
             .catch(
-              (e) => (this.gpsError = e instanceof Error ? e.message : 'Location upload failed.'),
+              (e) => (this.gpsError = e instanceof Error ? e.message : LOCATION_UPLOAD_FAILED),
             );
         }
       },
       (error) => {
-        this.gpsError = error.message || 'Unable to obtain GPS location.';
+        this.gpsError = error.message || UNABLE_OBTAIN_GPS_LOCATION;
       },
       { enableHighAccuracy: true, maximumAge: 3000, timeout: 15000 },
     );

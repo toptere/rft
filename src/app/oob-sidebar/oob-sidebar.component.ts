@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { LatLongLocation, UserLocation, UserWithLocation, UnitWithUsers } from '../models';
 import { LatLongToUtmMgrsPipe } from '../pipes/lat-long-to-utm-mgrs.pipe';
+import { ACCURACY, COLLAPSE, NO_LOCATION_RECEIVED, OOB_TITLE, SHOW } from '../../resources/labels';
 
 @Component({
   selector: 'app-oob-sidebar',
@@ -10,13 +11,13 @@ import { LatLongToUtmMgrsPipe } from '../pipes/lat-long-to-utm-mgrs.pipe';
   template: `
     <aside class="sidebar" [class.open]="open">
       <div class="title">
-        <h2>ODB</h2>
+        <h2>{{ OOB_TITLE }}</h2>
       </div>
       @for (unit of units; track unit) {
         <div class="unit">
           <section class="unit-header">
             <button class="unit-header-button" (click)="toggleUnitIsHidden(unit.unitName)">
-              {{ unit.isHidden ? 'Show' : 'Collapse' }} {{ unit.unitName }}
+              {{ unit.isHidden ? SHOW : COLLAPSE }} {{ unit.unitName }}
             </button>
           </section>
           <div class="unit-content" [hidden]="unit.isHidden">
@@ -37,13 +38,13 @@ import { LatLongToUtmMgrsPipe } from '../pipes/lat-long-to-utm-mgrs.pipe';
                     <div>
                       {{ { latitude: loc.latitude, longitude: loc.longitude } | latLongToUtmMgrs }}
                     </div>
-                    <small>Accuracy: {{ loc.accuracy_m | number: '1.0-0' }} m</small>
+                    <small>{{ ACCURACY }}: {{ loc.accuracy_m | number: '1.0-0' }} m</small>
                     <small
                       >{{ loc.updated_at | date: 'ddHHmm' }}L
                       {{ loc.updated_at | date: 'LLL yy' }}</small
                     >
                   } @else {
-                    <small>No location received yet</small>
+                    <small>{{ NO_LOCATION_RECEIVED }}</small>
                   }
                 </div>
                 <button
@@ -74,8 +75,9 @@ import { LatLongToUtmMgrsPipe } from '../pipes/lat-long-to-utm-mgrs.pipe';
         box-shadow: 4px 0 18px #0002;
         transform: translateX(-105%);
         transition: transform 0.2s ease;
-        font: 13px Arial,
-        sans-serif;
+        font:
+          13px Arial,
+          sans-serif;
       }
 
       .sidebar.open {
@@ -207,4 +209,10 @@ export class OobSidebarComponent implements OnChanges {
   private uniqueFilter(value: string, index: number, self: string[]) {
     return self.indexOf(value) === index;
   }
+
+  protected readonly OOB_TITLE = OOB_TITLE;
+  protected readonly SHOW = SHOW;
+  protected readonly COLLAPSE = COLLAPSE;
+  protected readonly NO_LOCATION_RECEIVED = NO_LOCATION_RECEIVED;
+  protected readonly ACCURACY = ACCURACY;
 }

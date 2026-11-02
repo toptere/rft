@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { LatLongToUtmMgrsPipe } from '../pipes/lat-long-to-utm-mgrs.pipe';
 import { LatLongLocation } from '../models';
+import { METER_UNIT, MIL_UNIT, OOB_BUTTON } from '../../resources/labels';
 
 const TO_RADIANS = (degrees: number) => (degrees * Math.PI) / 180;
 const EARTH_RADIUS = 6371000;
@@ -16,7 +17,7 @@ const EARTH_RADIUS = 6371000;
         (click)="oobSidebarToggle.emit()"
         aria-label="Toggle user list"
       >
-        OB
+        {{ OOB_BUTTON }}
       </button>
       <div class="reticule">
         <span class="coordinates">
@@ -124,7 +125,7 @@ export class HeaderComponent {
       const distance: number = Math.round(
         EARTH_RADIUS * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)),
       );
-      return distance + 'm';
+      return distance + METER_UNIT;
     } else {
       return '-';
     }
@@ -158,9 +159,11 @@ export class HeaderComponent {
       // Convert degrees to NATO mils (6400 mils per circle).
       const mils: number = Math.round(degrees * (6400 / 360)) % 6400;
 
-      return `${mils}mil`;
+      return `${mils}` + MIL_UNIT;
     } else {
       return '-';
     }
   }
+
+  protected readonly OOB_BUTTON = OOB_BUTTON;
 }

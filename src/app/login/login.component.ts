@@ -1,6 +1,14 @@
 import { Component, EventEmitter, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { AuthService } from '../services/auth.service';
+import {
+  LOGIN_FAILED,
+  LOGIN_TITLE,
+  PASSWORD,
+  SIGN_IN,
+  SIGNING_IN,
+  USERNAME,
+} from '../../resources/labels';
 
 @Component({
   selector: 'app-login',
@@ -9,9 +17,9 @@ import { AuthService } from '../services/auth.service';
   template: `
     <div class="backdrop">
       <form class="dialog" (ngSubmit)="submit()">
-        <h1>RFT - login</h1>
+        <h1>{{ LOGIN_TITLE }}</h1>
         <label
-          >Username
+          >{{ USERNAME }}
           <input
             name="username"
             [(ngModel)]="username"
@@ -21,7 +29,7 @@ import { AuthService } from '../services/auth.service';
           />
         </label>
         <label
-          >Password
+          >{{ PASSWORD }}
           <input
             name="password"
             [(ngModel)]="password"
@@ -33,7 +41,7 @@ import { AuthService } from '../services/auth.service';
         @if (error) {
           <p class="error">{{ error }}</p>
         }
-        <button type="submit" [disabled]="busy">{{ busy ? 'Signing in…' : 'Sign in' }}</button>
+        <button type="submit" [disabled]="busy">{{ busy ? SIGNING_IN : SIGN_IN }}</button>
       </form>
     </div>
   `,
@@ -121,9 +129,15 @@ export class LoginComponent {
       await this.auth.signIn(this.username, this.password);
       this.loggedIn.emit();
     } catch (e) {
-      this.error = e instanceof Error ? e.message : 'Login failed.';
+      this.error = e instanceof Error ? e.message : LOGIN_FAILED;
     } finally {
       this.busy = false;
     }
   }
+
+  protected readonly USERNAME = USERNAME;
+  protected readonly PASSWORD = PASSWORD;
+  protected readonly SIGNING_IN = SIGNING_IN;
+  protected readonly SIGN_IN = SIGN_IN;
+  protected readonly LOGIN_TITLE = LOGIN_TITLE;
 }

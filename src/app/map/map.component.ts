@@ -37,10 +37,10 @@ import { LatLongLocation, LayerMode, UserWithLocation } from '../models';
       }
 
       :host ::ng-deep .leaflet-control-zoom a {
-        width: 44px;
-        height: 44px;
-        line-height: 42px;
-        font-size: 24px;
+        width: 36px;
+        height: 36px;
+        line-height: 34px;
+        font-size: 22px;
       }
 
       :host ::ng-deep .leaflet-control-attribution {

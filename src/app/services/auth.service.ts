@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../supabase.client';
+import { ENTER_VALID_USERNAME } from '../../resources/labels';
 
 const EMAIL_DOMAIN = '@rft.neb';
 
@@ -27,7 +28,7 @@ export class AuthService {
   async signIn(username: string, password: string): Promise<void> {
     const normalized = username.trim().toLowerCase();
     if (!/^[a-z0-9]+$/.test(normalized)) {
-      throw new Error('Enter a valid username.');
+      throw new Error(ENTER_VALID_USERNAME);
     }
     const { error } = await supabase.auth.signInWithPassword({
       email: `${normalized}${EMAIL_DOMAIN}`,

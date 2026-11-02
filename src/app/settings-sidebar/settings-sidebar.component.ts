@@ -3,6 +3,15 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { LatLongLocation, LayerMode } from '../models';
 import { EmailToUsernamePipe } from '../pipes/email-to-username.pipe';
 import { LatLongToUtmMgrsPipe } from '../pipes/lat-long-to-utm-mgrs.pipe';
+import {
+  ACCURACY,
+  COORDINATES,
+  LOGOUT,
+  METER_UNIT,
+  ROAD,
+  SATELLITE,
+  SWITCH_MAP_MODE,
+} from '../../resources/labels';
 
 @Component({
   selector: 'app-settings-sidebar',
@@ -19,24 +28,26 @@ import { LatLongToUtmMgrsPipe } from '../pipes/lat-long-to-utm-mgrs.pipe';
       <div class="sections">
         <section class="location-info">
           <div class="info">
-            <strong>Coordinates:</strong><br />
+            <strong>{{ COORDINATES }}</strong
+            ><br />
             {{ userLocation | latLongToUtmMgrs }}
           </div>
           <div class="info">
-            <strong>Accuracy:</strong><br />
-            {{ userLocation ? (userLocation.accuracy | number: '1.0-0') + ' m' : '—' }}
+            <strong>{{ ACCURACY }}</strong
+            ><br />
+            {{ userLocation ? (userLocation.accuracy | number: '1.0-0') + ' ' + METER_UNIT : '—' }}
           </div>
         </section>
 
         <section class="sidebar-layer">
           <button class="layer-button" (click)="switchLayerAndClose()">
-            Switch to {{ layerMode === LayerMode.ROAD ? 'satellite' : 'road' }} map
+            {{ SWITCH_MAP_MODE }} {{ layerMode === LayerMode.ROAD ? SATELLITE : ROAD }}
           </button>
         </section>
       </div>
 
       <div class="sidebar-footer">
-        <button class="logout-button" (click)="logoutAndClose()">Log out</button>
+        <button class="logout-button" (click)="logoutAndClose()">{{ LOGOUT }}</button>
       </div>
     </aside>
   `,
@@ -141,4 +152,12 @@ export class SettingsSidebarComponent {
     this.logout.emit();
     this.close.emit();
   }
+
+  protected readonly COORDINATES = COORDINATES;
+  protected readonly ACCURACY = ACCURACY;
+  protected readonly METER_UNIT = METER_UNIT;
+  protected readonly SWITCH_MAP_MODE = SWITCH_MAP_MODE;
+  protected readonly SATELLITE = SATELLITE;
+  protected readonly ROAD = ROAD;
+  protected readonly LOGOUT = LOGOUT;
 }
