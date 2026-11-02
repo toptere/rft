@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { Session, User } from '@supabase/supabase-js';
+import { AuthError, Session, User } from '@supabase/supabase-js';
 import { supabase } from '../supabase.client';
 import { ENTER_VALID_USERNAME } from '../../resources/labels';
 
@@ -38,7 +38,12 @@ export class AuthService {
   }
 
   async signOut(): Promise<void> {
-    const { error } = await supabase.auth.signOut();
+    const error: AuthError | null = await supabase.auth.signOut().then(({ error }) => {
+      this.session$.next(null);
+      this.user$.next(null);
+      this.ready$.next(false);
+      return error;
+    });
     if (error) throw error;
   }
 }

@@ -53,7 +53,7 @@ import {
             [users]="users"
             [visibility]="visibility"
             (close)="oobSidebarOpen = false"
-            (visibilityChange)="setVisibility($event.id, $event.visible)"
+            (visibilityChange)="setVisibility($event.userId, $event.visible)"
             (centerOnLocation)="onCenterOnLocation($event)"
           >
           </app-oob-sidebar>

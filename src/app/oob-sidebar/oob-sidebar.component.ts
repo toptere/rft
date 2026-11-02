@@ -1,8 +1,19 @@
-import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnChanges,
+  OnInit,
+  Output,
+  SimpleChanges,
+} from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { LatLongLocation, UserLocation, UserWithLocation, UnitWithUsers } from '../models';
 import { LatLongToUtmMgrsPipe } from '../pipes/lat-long-to-utm-mgrs.pipe';
 import { ACCURACY, COLLAPSE, NO_LOCATION_RECEIVED, OOB_TITLE, SHOW } from '../../resources/labels';
+
+const UNIT_VISIBILITY_STORAGE_KEY: string = 'unit-marker-visibility';
+const USER_VISIBILITY_STORAGE_KEY: string = 'user-marker-visibility';
 
 @Component({
   selector: 'app-oob-sidebar',
@@ -16,19 +27,17 @@ import { ACCURACY, COLLAPSE, NO_LOCATION_RECEIVED, OOB_TITLE, SHOW } from '../..
       @for (unit of units; track unit) {
         <div class="unit">
           <section class="unit-header">
-            <button class="unit-header-button" (click)="toggleUnitIsHidden(unit.unitName)">
-              {{ unit.isHidden ? SHOW : COLLAPSE }} {{ unit.unitName }}
+            <button class="unit-header-button" (click)="toggleUnitVisibility(unit.unitName)">
+              {{ unitVisibility[unit.unitName] ? SHOW : COLLAPSE }} {{ unit.unitName }}
             </button>
           </section>
-          <div class="unit-content" [hidden]="unit.isHidden">
+          <div class="unit-content" [hidden]="unitVisibility[unit.unitName]">
             @for (user of unit.unitUsers; track user.id) {
               <article class="user">
                 <input
                   type="checkbox"
-                  [checked]="visibility[user.id]"
-                  (change)="
-                    visibilityChange.emit({ id: user.id, visible: $any($event.target).checked })
-                  "
+                  [checked]="markerVisibility[user.id] ?? true"
+                  (change)="toggleMarkerVisibility(user.id, $any($event.target).checked)"
                 />
                 <div class="user-info">
                   <label class="name">
@@ -162,15 +171,22 @@ import { ACCURACY, COLLAPSE, NO_LOCATION_RECEIVED, OOB_TITLE, SHOW } from '../..
     `,
   ],
 })
-export class OobSidebarComponent implements OnChanges {
+export class OobSidebarComponent implements OnInit, OnChanges {
   @Input() open = false;
   @Input() users: UserWithLocation[] = [];
   @Input() visibility: Record<string, boolean> = {};
   @Output() close = new EventEmitter<void>();
-  @Output() visibilityChange = new EventEmitter<{ id: string; visible: boolean }>();
+  @Output() visibilityChange = new EventEmitter<{ userId: string; visible: boolean }>();
   @Output() centerOnLocation = new EventEmitter<LatLongLocation>();
 
   protected units: UnitWithUsers[] = [];
+  protected markerVisibility: Record<string, boolean> = {};
+  protected unitVisibility: Record<string, boolean> = {};
+
+  ngOnInit(): void {
+    this.loadUnitVisibility();
+    this.loadMarkerVisibility();
+  }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['users']) {
@@ -191,18 +207,46 @@ export class OobSidebarComponent implements OnChanges {
     }
   }
 
-  protected toggleUnitIsHidden(unitName: string) {
-    for (const unit of this.units) {
-      if (unit.unitName === unitName) {
-        unit.isHidden = !unit.isHidden;
-      }
-    }
+  protected toggleUnitVisibility(unitName: string) {
+    this.unitVisibility[unitName] = !this.unitVisibility[unitName];
+    localStorage.setItem(UNIT_VISIBILITY_STORAGE_KEY, JSON.stringify(this.unitVisibility));
+  }
+
+  toggleMarkerVisibility(userId: string, visible: boolean): void {
+    this.markerVisibility[userId] = visible;
+    localStorage.setItem(USER_VISIBILITY_STORAGE_KEY, JSON.stringify(this.markerVisibility));
+    this.visibilityChange.emit({
+      userId,
+      visible,
+    });
+    console.log(JSON.stringify(this.markerVisibility));
   }
 
   protected centerOnUserLocation(location: UserLocation | null): void {
     if (location) {
       this.centerOnLocation.emit({ latitude: location.latitude, longitude: location.longitude });
       this.close.emit();
+    }
+  }
+
+  private loadMarkerVisibility(): void {
+    try {
+      const saved: string | null = localStorage.getItem(USER_VISIBILITY_STORAGE_KEY);
+      this.markerVisibility = saved ? JSON.parse(saved) : {};
+    } catch {
+      this.markerVisibility = {};
+    }
+    for (const userId in this.markerVisibility) {
+      this.visibilityChange.emit({ userId, visible: this.markerVisibility[userId] });
+    }
+  }
+
+  private loadUnitVisibility(): void {
+    try {
+      const saved: string | null = localStorage.getItem(UNIT_VISIBILITY_STORAGE_KEY);
+      this.unitVisibility = saved ? JSON.parse(saved) : {};
+    } catch {
+      this.unitVisibility = {};
     }
   }
 
