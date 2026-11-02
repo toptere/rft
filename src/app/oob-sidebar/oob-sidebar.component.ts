@@ -219,7 +219,6 @@ export class OobSidebarComponent implements OnInit, OnChanges {
       userId,
       visible,
     });
-    console.log(JSON.stringify(this.markerVisibility));
   }
 
   protected centerOnUserLocation(location: UserLocation | null): void {
