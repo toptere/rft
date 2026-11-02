@@ -1,6 +1,6 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
-import { LatLongLocation, UserLocation, UserWithLocation } from '../models';
+import { LatLongLocation, UserLocation, UserWithLocation, UnitWithUsers } from '../models';
 import { LatLongToUtmMgrsPipe } from '../pipes/lat-long-to-utm-mgrs.pipe';
 
 @Component({
@@ -12,37 +12,51 @@ import { LatLongToUtmMgrsPipe } from '../pipes/lat-long-to-utm-mgrs.pipe';
       <div class="title">
         <h2>ODB</h2>
       </div>
-      @for (user of users; track user.id) {
-        <article class="user">
-          <input
-            type="checkbox"
-            [checked]="visibility[user.id]"
-            (change)="visibilityChange.emit({ id: user.id, visible: $any($event.target).checked })"
-          />
-          <div class="user-info">
-            <label class="name">
-              <b>{{ user.username }}</b>
-            </label>
-            @if (user.location; as loc) {
-              <div>
-                {{ { latitude: loc.latitude, longitude: loc.longitude } | latLongToUtmMgrs }}
-              </div>
-              <small>Accuracy: {{ loc.accuracy_m | number: '1.0-0' }} m</small>
-              <small
-                >{{ loc.updated_at | date: 'ddHHmm' }}L {{ loc.updated_at | date: 'LLL yy' }}</small
-              >
-            } @else {
-              <small>No location received yet</small>
+      @for (unit of units; track unit) {
+        <div class="unit">
+          <section class="unit-header">
+            <button class="unit-header-button" (click)="toggleUnitIsHidden(unit.unitName)">
+              {{ unit.isHidden ? 'Show' : 'Collapse' }} {{ unit.unitName }}
+            </button>
+          </section>
+          <div class="unit-content" [hidden]="unit.isHidden">
+            @for (user of unit.unitUsers; track user.id) {
+              <article class="user">
+                <input
+                  type="checkbox"
+                  [checked]="visibility[user.id]"
+                  (change)="
+                    visibilityChange.emit({ id: user.id, visible: $any($event.target).checked })
+                  "
+                />
+                <div class="user-info">
+                  <label class="name">
+                    <b>{{ user.username }}</b>
+                  </label>
+                  @if (user.location; as loc) {
+                    <div>
+                      {{ { latitude: loc.latitude, longitude: loc.longitude } | latLongToUtmMgrs }}
+                    </div>
+                    <small>Accuracy: {{ loc.accuracy_m | number: '1.0-0' }} m</small>
+                    <small
+                      >{{ loc.updated_at | date: 'ddHHmm' }}L
+                      {{ loc.updated_at | date: 'LLL yy' }}</small
+                    >
+                  } @else {
+                    <small>No location received yet</small>
+                  }
+                </div>
+                <button
+                  (click)="centerOnUserLocation(user.location)"
+                  [disabled]="!user.location"
+                  aria-label="Center on user location"
+                >
+                  ◎
+                </button>
+              </article>
             }
           </div>
-          <button
-            (click)="centerOnUserLocation(user.location)"
-            [disabled]="!user.location"
-            aria-label="Center on user location"
-          >
-            ◎
-          </button>
-        </article>
+        </div>
       }
     </aside>
   `,
@@ -60,9 +74,8 @@ import { LatLongToUtmMgrsPipe } from '../pipes/lat-long-to-utm-mgrs.pipe';
         box-shadow: 4px 0 18px #0002;
         transform: translateX(-105%);
         transition: transform 0.2s ease;
-        font:
-          13px Arial,
-          sans-serif;
+        font: 13px Arial,
+        sans-serif;
       }
 
       .sidebar.open {
@@ -87,6 +100,24 @@ import { LatLongToUtmMgrsPipe } from '../pipes/lat-long-to-utm-mgrs.pipe';
         background: transparent;
         font-size: 24px;
         cursor: pointer;
+      }
+
+      .unit {
+        border-top: 3px solid #c1c1c1;
+
+        .unit-header {
+          display: flex;
+          justify-content: center;
+          background: #f8e8e8;
+
+          .unit-header-button {
+            width: 100%;
+            min-height: 48px;
+            padding: 10px;
+            font-size: 16px;
+            font-weight: 600;
+          }
+        }
       }
 
       .user {
@@ -129,7 +160,7 @@ import { LatLongToUtmMgrsPipe } from '../pipes/lat-long-to-utm-mgrs.pipe';
     `,
   ],
 })
-export class OobSidebarComponent {
+export class OobSidebarComponent implements OnChanges {
   @Input() open = false;
   @Input() users: UserWithLocation[] = [];
   @Input() visibility: Record<string, boolean> = {};
@@ -137,10 +168,43 @@ export class OobSidebarComponent {
   @Output() visibilityChange = new EventEmitter<{ id: string; visible: boolean }>();
   @Output() centerOnLocation = new EventEmitter<LatLongLocation>();
 
+  protected units: UnitWithUsers[] = [];
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['users']) {
+      this.units = this.users
+        .map((user) => user.unit)
+        .filter(this.uniqueFilter)
+        .map((unit: string): UnitWithUsers => {
+          return { unitName: unit, isHidden: false, unitUsers: [] };
+        })
+        .sort((unit1: UnitWithUsers, unit2: UnitWithUsers): number =>
+          unit1.unitName.localeCompare(unit2.unitName),
+        );
+      for (const user of this.users) {
+        this.units
+          .filter((unit) => unit.unitName === user.unit)
+          .forEach((unit) => unit.unitUsers.push(user));
+      }
+    }
+  }
+
+  protected toggleUnitIsHidden(unitName: string) {
+    for (const unit of this.units) {
+      if (unit.unitName === unitName) {
+        unit.isHidden = !unit.isHidden;
+      }
+    }
+  }
+
   protected centerOnUserLocation(location: UserLocation | null): void {
     if (location) {
       this.centerOnLocation.emit({ latitude: location.latitude, longitude: location.longitude });
       this.close.emit();
     }
+  }
+
+  private uniqueFilter(value: string, index: number, self: string[]) {
+    return self.indexOf(value) === index;
   }
 }

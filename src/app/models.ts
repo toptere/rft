@@ -5,6 +5,7 @@ export const OBS_EMAIL: string = 'obs@rft.neb';
 export interface UserProfile {
   id: string;
   username: string;
+  unit: string;
   hierarchy: string;
 }
 
@@ -18,6 +19,12 @@ export interface UserLocation {
 
 export interface UserWithLocation extends UserProfile {
   location: UserLocation | null;
+}
+
+export interface UnitWithUsers {
+  unitName: string;
+  isHidden: boolean;
+  unitUsers: UserWithLocation[];
 }
 
 export enum LayerMode {

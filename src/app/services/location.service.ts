@@ -12,7 +12,7 @@ export class LocationService {
   async loadUsers(): Promise<void> {
     const [{ data: profiles, error: profileError }, { data: locations, error: locationError }] =
       await Promise.all([
-        supabase.from('profiles').select('id, username, hierarchy').order('hierarchy'),
+        supabase.from('profiles').select('id, username, hierarchy, unit').order('hierarchy'),
         supabase.from('locations').select('user_id, latitude, longitude, accuracy_m, updated_at'),
       ]);
     if (profileError) throw profileError;
@@ -27,6 +27,7 @@ export class LocationService {
           id: profile.id,
           username: profile.username,
           location: locationById.get(profile.id) ?? null,
+          unit: profile.unit,
           hierarchy: profile.hierarchy,
         }))
         .filter((profile: UserWithLocation) => profile.username !== OBS)
