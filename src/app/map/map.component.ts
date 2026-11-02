@@ -11,7 +11,7 @@ import {
   ViewChild,
 } from '@angular/core';
 import * as L from 'leaflet';
-import { LatLongLocation, LayerMode, UserWithLocation } from '../models';
+import { LatLongLocation, LayerMode, UserLocation, UserWithLocation } from '../models';
 
 @Component({
   selector: 'app-map',
@@ -169,6 +169,8 @@ export class MapComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   private syncMarkers(): void {
     if (!this.map) return;
+    const nowMinusOneHour: Date = new Date();
+    nowMinusOneHour.setHours(nowMinusOneHour.getHours() -1);
     for (const user of this.users) {
       const loc = user.location;
       if (!loc) {
@@ -176,12 +178,13 @@ export class MapComponent implements AfterViewInit, OnChanges, OnDestroy {
         this.markers.delete(user.id);
         continue;
       }
+      const markerClass: string = this.computeUserMarkerClass(loc, nowMinusOneHour);
       let marker = this.markers.get(user.id);
       if (!marker) {
         marker = L.marker([loc.latitude, loc.longitude], {
           icon: L.divIcon({
             className: 'user-marker-wrapper',
-            html: `<div class="user-marker">${this.escapeHtml(user.username)}</div>`,
+            html: `<div class="${markerClass}">${this.escapeHtml(user.username)}</div>`,
             iconSize: undefined,
             iconAnchor: [0, 15],
           }),
@@ -192,7 +195,7 @@ export class MapComponent implements AfterViewInit, OnChanges, OnDestroy {
         marker.setIcon(
           L.divIcon({
             className: 'user-marker-wrapper',
-            html: `<div class="user-marker">${this.escapeHtml(user.username)}</div>`,
+            html: `<div class="${markerClass}">${this.escapeHtml(user.username)}</div>`,
             iconAnchor: [0, 15],
           }),
         );
@@ -212,6 +215,11 @@ export class MapComponent implements AfterViewInit, OnChanges, OnDestroy {
       /[&<>"']/g,
       (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]!,
     );
+  }
+
+  private computeUserMarkerClass(location: UserLocation, referenceDate: Date): string {
+    const updatedAt: Date = new Date(location.updated_at);
+    return updatedAt < referenceDate ? 'user-marker old' : 'user-marker';
   }
 
   centerOnCurrentUser(): void {

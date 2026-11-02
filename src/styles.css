@@ -29,17 +29,23 @@ button {
 .user-marker-wrapper {
   background: transparent;
   border: 0;
+
+  .user-marker {
+    display: inline-block;
+    white-space: nowrap;
+    min-height: 28px;
+    padding: 6px 8px;
+    color: #000000;
+    background: #1677ff;
+    border: 1px solid #020202;
+    border-radius: 2px;
+    box-shadow: 0 1px 4px #0006;
+    font: 700 12px/1.2 Arial, sans-serif;
+  }
+
+  .old {
+    background: #3e8dff;
+    opacity: 70%;
+  }
 }
 
-.user-marker {
-  display: inline-block;
-  white-space: nowrap;
-  min-height: 28px;
-  padding: 6px 8px;
-  color: #000000;
-  background: #1677ff;
-  border: 1px solid #020202;
-  border-radius: 2px;
-  box-shadow: 0 1px 4px #0006;
-  font: 700 12px/1.2 Arial, sans-serif;
-}
