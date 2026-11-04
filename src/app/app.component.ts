@@ -1,4 +1,4 @@
-import { Component, NgZone, OnDestroy, OnInit, signal } from '@angular/core';
+import { Component, OnDestroy, OnInit, signal, WritableSignal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { AuthService } from './services/auth.service';
 import { LocationService } from './services/location.service';
@@ -32,17 +32,17 @@ import {
     } @else {
       <main class="app-shell">
         <app-header
-          [userLocation]="currentUserLocation"
-          [reticuleLocation]="currentReticuleLocation"
+          [userLocation]="currentUserLocation()"
+          [reticuleLocation]="currentReticuleLocation()"
           (oobSidebarToggle)="oobSidebarOpen = !oobSidebarOpen"
           (settingsSidebarToggle)="settingsSidebarOpen = !settingsSidebarOpen"
         >
         </app-header>
         <section class="map-area">
           <app-map
-            [users]="users"
-            [currentUserId]="currentUserId"
-            [userLocation]="currentUserLocation"
+            [users]="users()"
+            [currentUserId]="currentUserId()"
+            [userLocation]="currentUserLocation()"
             [visibility]="visibility"
             [layerMode]="currentLayerMode"
             [centerOnLocation]="centerOnLocation"
@@ -50,7 +50,7 @@ import {
           ></app-map>
           <app-oob-sidebar
             [open]="oobSidebarOpen"
-            [users]="users"
+            [users]="users()"
             [visibility]="visibility"
             (close)="oobSidebarOpen = false"
             (visibilityChange)="setVisibility($event.userId, $event.visible)"
@@ -59,8 +59,8 @@ import {
           </app-oob-sidebar>
           <app-settings-sidebar
             [isOpen]="settingsSidebarOpen"
-            [userEmail]="currentUserEmail"
-            [userLocation]="currentUserLocation"
+            [userEmail]="currentUserEmail()"
+            [userLocation]="currentUserLocation()"
             [layerMode]="currentLayerMode"
             (close)="settingsSidebarOpen = false"
             (toggleLayer)="onToggleMapLayer($event)"
@@ -113,13 +113,10 @@ import {
   ],
 })
 export class AppComponent implements OnInit, OnDestroy {
-  currentUserId: string | null = null;
-  currentUserEmail: string | undefined = undefined;
-  users: UserWithLocation[] = [];
+  currentUserId: WritableSignal<string | null> = signal(null);
+  currentUserEmail: WritableSignal<string | undefined> = signal(undefined);
+  users: WritableSignal<UserWithLocation[]> = signal([]);
   visibility: Record<string, boolean> = {};
-
-  currentUserLocation: LatLongLocation | undefined = undefined;
-  currentReticuleLocation: LatLongLocation | undefined = undefined;
 
   gpsError = '';
 
@@ -132,7 +129,9 @@ export class AppComponent implements OnInit, OnDestroy {
   private subs = new Subscription();
   private initializedForUserId: string | null = null;
 
-  isSignedIn = signal(false);
+  isSignedIn: WritableSignal<boolean> = signal(false);
+  currentUserLocation: WritableSignal<LatLongLocation | undefined> = signal(undefined);
+  currentReticuleLocation: WritableSignal<LatLongLocation | undefined> = signal(undefined);
 
   constructor(
     private auth: AuthService,
@@ -141,8 +140,8 @@ export class AppComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.subs.add(
-      this.locations.users$.subscribe((users) => {
-        this.users = users;
+      this.locations.users$.subscribe((users: UserWithLocation[]) => {
+        this.users.set(users);
         for (const user of users) {
           if (this.visibility[user.id] === undefined) this.visibility[user.id] = true;
         }
@@ -151,8 +150,8 @@ export class AppComponent implements OnInit, OnDestroy {
     this.subs.add(
       this.auth.user$.subscribe((user) => {
         if (user) {
-          this.currentUserId = user.id;
-          this.currentUserEmail = user.email;
+          this.currentUserId.set(user.id);
+          this.currentUserEmail.set(user.email);
           this.isSignedIn.set(true);
           if (this.initializedForUserId !== user.id) {
             this.initializedForUserId = user.id;
@@ -193,16 +192,18 @@ export class AppComponent implements OnInit, OnDestroy {
       (position) => {
         const { latitude, longitude, accuracy } = position.coords;
         const newLocation: LatLongLocation = { latitude, longitude, accuracy };
+        const currentUserLocationVal: LatLongLocation | undefined = this.currentUserLocation();
         if (
-          this.currentUserLocation === undefined ||
-          this.locations.computeDistanceBetweenLocations(this.currentUserLocation, newLocation) > 10
+          currentUserLocationVal === undefined ||
+          this.locations.computeDistanceBetweenLocations(currentUserLocationVal, newLocation) > 10
         ) {
-          this.currentUserLocation = newLocation;
-          this.currentReticuleLocation = { latitude, longitude };
+          this.currentUserLocation.set(newLocation);
+          this.currentReticuleLocation.set({ latitude, longitude });
           this.gpsError = '';
-          if (this.currentUserId && this.currentUserEmail !== OBS_EMAIL) {
+          const currentUserIdVal: string | null = this.currentUserId();
+          if (currentUserIdVal && this.currentUserEmail() !== OBS_EMAIL) {
             void this.locations
-              .publishMyLocation(this.currentUserId, latitude, longitude, accuracy)
+              .publishMyLocation(currentUserIdVal, latitude, longitude, accuracy)
               .catch(
                 (e) => (this.gpsError = e instanceof Error ? e.message : LOCATION_UPLOAD_FAILED),
               );
@@ -217,7 +218,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   onCenterChanged(center: { lat: number; lng: number }): void {
-    this.currentReticuleLocation = { latitude: center.lat, longitude: center.lng };
+    this.currentReticuleLocation.set({ latitude: center.lat, longitude: center.lng });
   }
 
   onToggleMapLayer(layerMode: LayerMode): void {
@@ -229,10 +230,10 @@ export class AppComponent implements OnInit, OnDestroy {
       .signOut()
       .catch((reason) => console.error(reason))
       .finally(() => {
-        this.currentUserId = null;
-        this.currentUserEmail = undefined;
-        this.currentUserLocation = undefined;
-        this.currentReticuleLocation = undefined;
+        this.currentUserId.set(null);
+        this.currentUserEmail.set(undefined);
+        this.currentUserLocation.set(undefined);
+        this.currentReticuleLocation.set(undefined);
       });
   }
 
