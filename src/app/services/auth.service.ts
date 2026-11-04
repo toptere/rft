@@ -10,7 +10,7 @@ const EMAIL_DOMAIN = '@rft.neb';
 export class AuthService {
   readonly session$ = new BehaviorSubject<Session | null>(null);
   readonly user$ = new BehaviorSubject<User | null>(null);
-  readonly ready$ = new BehaviorSubject<boolean>(false);
+  readonly ready$ = new BehaviorSubject<boolean | null>(false);
 
   constructor() {
     supabase.auth.getSession().then(({ data }) => {

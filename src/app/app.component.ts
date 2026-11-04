@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component, NgZone, OnDestroy, OnInit, signal } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { AuthService } from './services/auth.service';
 import { LocationService } from './services/location.service';
@@ -27,7 +27,7 @@ import {
     MapComponent,
   ],
   template: `
-    @if (!signedIn) {
+    @if (!isSignedIn()) {
       <app-login (loggedIn)="onLoggedIn()"></app-login>
     } @else {
       <main class="app-shell">
@@ -113,7 +113,6 @@ import {
   ],
 })
 export class AppComponent implements OnInit, OnDestroy {
-  signedIn: boolean = false;
   currentUserId: string | null = null;
   currentUserEmail: string | undefined = undefined;
   users: UserWithLocation[] = [];
@@ -132,6 +131,8 @@ export class AppComponent implements OnInit, OnDestroy {
   private watchId: number | null = null;
   private subs = new Subscription();
   private initializedForUserId: string | null = null;
+
+  isSignedIn = signal(false);
 
   constructor(
     private auth: AuthService,
@@ -152,13 +153,13 @@ export class AppComponent implements OnInit, OnDestroy {
         if (user) {
           this.currentUserId = user.id;
           this.currentUserEmail = user.email;
-          this.signedIn = true;
+          this.isSignedIn.set(true);
           if (this.initializedForUserId !== user.id) {
             this.initializedForUserId = user.id;
             void this.initialize();
           }
         } else {
-          this.signedIn = false;
+          this.isSignedIn.set(false);
           this.stopTracking();
           this.locations.stopRealtime();
           this.initializedForUserId = null;
