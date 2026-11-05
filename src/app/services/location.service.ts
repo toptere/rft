@@ -5,6 +5,7 @@ import { supabase } from '../supabase.client';
 import * as mgrs from 'mgrs';
 
 const UTM_MGRS_FORMAT_MATCHER = /^(\d{1,2}[C-HJ-NP-X])([A-HJ-NP-Z]{2})(\d{5})(\d{5})$/;
+const PUBLISH_DELAY: number = 20000;
 
 @Injectable({ providedIn: 'root' })
 export class LocationService {
@@ -48,7 +49,7 @@ export class LocationService {
   ): Promise<void> {
     // Avoid flooding the database when the browser emits very frequent GPS updates.
     const now = Date.now();
-    if (now - this.lastWriteAt < 5000) return;
+    if (now - this.lastWriteAt < PUBLISH_DELAY) return;
     this.lastWriteAt = now;
     const { error } = await supabase.from('locations').upsert(
       {

@@ -192,22 +192,16 @@ export class AppComponent implements OnInit, OnDestroy {
       (position) => {
         const { latitude, longitude, accuracy } = position.coords;
         const newLocation: LatLongLocation = { latitude, longitude, accuracy };
-        const currentUserLocationVal: LatLongLocation | undefined = this.currentUserLocation();
-        if (
-          currentUserLocationVal === undefined ||
-          this.locations.computeDistanceBetweenLocations(currentUserLocationVal, newLocation) > 10
-        ) {
-          this.currentUserLocation.set(newLocation);
-          this.currentReticuleLocation.set({ latitude, longitude });
-          this.gpsError = '';
-          const currentUserIdVal: string | null = this.currentUserId();
-          if (currentUserIdVal && this.currentUserEmail() !== OBS_EMAIL) {
-            void this.locations
-              .publishMyLocation(currentUserIdVal, latitude, longitude, accuracy)
-              .catch(
-                (e) => (this.gpsError = e instanceof Error ? e.message : LOCATION_UPLOAD_FAILED),
-              );
-          }
+        this.currentUserLocation.set(newLocation);
+        this.currentReticuleLocation.set({ latitude, longitude });
+        this.gpsError = '';
+        const currentUserIdVal: string | null = this.currentUserId();
+        if (currentUserIdVal && this.currentUserEmail() !== OBS_EMAIL) {
+          void this.locations
+            .publishMyLocation(currentUserIdVal, latitude, longitude, accuracy)
+            .catch(
+              (e) => (this.gpsError = e instanceof Error ? e.message : LOCATION_UPLOAD_FAILED),
+            );
         }
       },
       (error) => {
