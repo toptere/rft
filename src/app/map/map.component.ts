@@ -164,7 +164,9 @@ export class MapComponent implements AfterViewInit, OnChanges, OnDestroy {
     if (changes['centerOnLocation'] && this.centerOnLocation) {
       this.centerOn(this.centerOnLocation);
     }
-    this.syncMarkers();
+    if (changes['users']) {
+      this.syncMarkers();
+    }
   }
 
   private syncMarkers(): void {
