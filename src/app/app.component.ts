@@ -63,7 +63,7 @@ import {
             [userLocation]="currentUserLocation()"
             [layerMode]="currentLayerMode"
             (close)="settingsSidebarOpen = false"
-            (toggleLayer)="onToggleMapLayer($event)"
+            (toggleLayer)="onMapLayerChange($event)"
             (logout)="onLogout()"
           >
           </app-settings-sidebar>
@@ -215,7 +215,7 @@ export class AppComponent implements OnInit, OnDestroy {
     this.currentReticuleLocation.set({ latitude: center.lat, longitude: center.lng });
   }
 
-  onToggleMapLayer(layerMode: LayerMode): void {
+  onMapLayerChange(layerMode: LayerMode): void {
     this.currentLayerMode = layerMode;
   }
 

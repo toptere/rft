@@ -28,7 +28,7 @@ export interface UnitWithUsers {
 }
 
 export enum LayerMode {
-  ROAD, SATELLITE
+  ROAD, SATELLITE, TOPO25
 }
 
 export interface LatLongLocation {

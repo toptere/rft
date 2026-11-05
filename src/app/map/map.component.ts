@@ -13,6 +13,21 @@ import {
 import * as L from 'leaflet';
 import { LatLongLocation, LayerMode, UserLocation, UserWithLocation } from '../models';
 
+const ROAD_TILES_URL: string = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+const SATELLITE_TILES_URL: string = 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}';
+const TOPO_25_TILES_URL: string =
+  'https://data.geopf.fr/private/wmts?apikey=ign_scan_ws' +
+  '&SERVICE=WMTS' +
+  '&VERSION=1.0.0' +
+  '&REQUEST=GetTile' +
+  '&LAYER=GEOGRAPHICALGRIDSYSTEMS.MAPS.SCAN25TOUR' +
+  '&STYLE=normal' +
+  '&FORMAT=image/jpeg' +
+  '&TILEMATRIXSET=PM' +
+  '&TILEMATRIX={z}' +
+  '&TILEROW={y}' +
+  '&TILECOL={x}';
+
 @Component({
   selector: 'app-map',
   standalone: true,
@@ -123,21 +138,23 @@ export class MapComponent implements AfterViewInit, OnChanges, OnDestroy {
   private map?: L.Map;
   private road?: L.TileLayer;
   private imagery?: L.TileLayer;
+  private ignTopo25Layer?: L.TileLayer;
   private markers = new Map<string, L.Marker>();
   private didInitialCenter = false;
 
   ngAfterViewInit(): void {
     this.map = L.map(this.mapHost.nativeElement, { zoomControl: true }).setView([20, 0], 2);
-    this.road = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    this.road = L.tileLayer(ROAD_TILES_URL, {
       maxZoom: 19,
     });
-    this.imagery = L.tileLayer(
-      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-      {
-        maxZoom: 19,
-      },
-    );
-    (this.layerMode === LayerMode.SATELLITE ? this.imagery : this.road).addTo(this.map);
+    this.imagery = L.tileLayer(SATELLITE_TILES_URL, {
+      maxZoom: 19,
+    });
+    this.ignTopo25Layer = L.tileLayer(TOPO_25_TILES_URL, {
+      maxNativeZoom: 16,
+      maxZoom: 22,
+    });
+    this.setCurrentLayer();
     L.control
       .scale({
         position: 'bottomleft',
@@ -159,7 +176,8 @@ export class MapComponent implements AfterViewInit, OnChanges, OnDestroy {
     if (changes['layerMode']) {
       this.road?.remove();
       this.imagery?.remove();
-      (this.layerMode === LayerMode.SATELLITE ? this.imagery : this.road)?.addTo(this.map);
+      this.ignTopo25Layer?.remove();
+      this.setCurrentLayer();
     }
     if (changes['centerOnLocation'] && this.centerOnLocation) {
       this.centerOn(this.centerOnLocation);
@@ -172,7 +190,7 @@ export class MapComponent implements AfterViewInit, OnChanges, OnDestroy {
   private syncMarkers(): void {
     if (!this.map) return;
     const nowMinusOneHour: Date = new Date();
-    nowMinusOneHour.setHours(nowMinusOneHour.getHours() -1);
+    nowMinusOneHour.setHours(nowMinusOneHour.getHours() - 1);
     for (const user of this.users) {
       const loc = user.location;
       if (!loc) {
@@ -222,6 +240,21 @@ export class MapComponent implements AfterViewInit, OnChanges, OnDestroy {
   private computeUserMarkerClass(location: UserLocation, referenceDate: Date): string {
     const updatedAt: Date = new Date(location.updated_at);
     return updatedAt < referenceDate ? 'user-marker old' : 'user-marker';
+  }
+
+  private setCurrentLayer(): void {
+    if (!this.map) return;
+    switch (this.layerMode) {
+      case LayerMode.ROAD:
+        this.road?.addTo(this.map);
+        break;
+      case LayerMode.SATELLITE:
+        this.imagery?.addTo(this.map);
+        break;
+      case LayerMode.TOPO25:
+        this.ignTopo25Layer?.addTo(this.map);
+        break;
+    }
   }
 
   centerOnCurrentUser(): void {

@@ -28,8 +28,8 @@ export const NO_LOCATION_RECEIVED: string = "Pas de position GPS reçue";
 export const COORDINATES: string = 'Coordonnées:';
 export const ACCURACY: string = 'Précision:';
 export const SATELLITE: string = 'Satellite';
-export const ROAD: string = 'Route';
-export const SWITCH_MAP_MODE: string = 'Changer carte:';
+export const ROADS: string = 'Routes';
+export const TOPO_25: string = 'IGN TOPO 25';
 export const LOGOUT: string = 'Déconnexion';
 
 // Auth Service

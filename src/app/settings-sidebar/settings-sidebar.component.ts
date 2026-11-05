@@ -8,9 +8,9 @@ import {
   COORDINATES,
   LOGOUT,
   METER_UNIT,
-  ROAD,
+  ROADS,
   SATELLITE,
-  SWITCH_MAP_MODE,
+  TOPO_25,
 } from '../../resources/labels';
 
 @Component({
@@ -40,9 +40,36 @@ import {
         </section>
 
         <section class="sidebar-layer">
-          <button class="layer-button" (click)="switchLayerAndClose()">
-            {{ SWITCH_MAP_MODE }} {{ layerMode === LayerMode.ROAD ? SATELLITE : ROAD }}
-          </button>
+          <label>
+            <input
+              type="radio"
+              name="mapLayer"
+              value="road"
+              [checked]="layerMode === LayerMode.ROAD"
+              (change)="selectLayer(LayerMode.ROAD)"
+            />
+            {{ ROADS }}
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="mapLayer"
+              value="satellite"
+              [checked]="layerMode === LayerMode.SATELLITE"
+              (change)="selectLayer(LayerMode.SATELLITE)"
+            />
+            {{ SATELLITE }}
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="mapLayer"
+              value="ign-topo-25"
+              [checked]="layerMode === LayerMode.TOPO25"
+              (change)="selectLayer(LayerMode.TOPO25)"
+            />
+            {{ TOPO_25 }}
+          </label>
         </section>
       </div>
 
@@ -103,14 +130,33 @@ import {
         }
 
         .sidebar-layer {
-          padding: 20px 20px;
+          display: flex;
+          flex-direction: column;
+          gap: 14px;
+          padding: 20px 0;
         }
 
-        .layer-button {
-          width: 100%;
-          min-height: 48px;
-          padding: 10px;
-          font-size: 16px;
+        .sidebar-layer h3 {
+          margin: 0 0 5px;
+        }
+
+        .sidebar-layer label {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          min-height: 44px;
+          cursor: pointer;
+          border: 2px solid #7c7c7c;
+          border-radius: 10px;
+          background: #fdecec;
+          padding-left: 20px;
+        }
+
+        .sidebar-layer input[type='radio'] {
+          width: 20px;
+          height: 20px;
+          margin: 0;
+          flex-shrink: 0;
         }
       }
 
@@ -141,10 +187,9 @@ export class SettingsSidebarComponent {
   @Output() close = new EventEmitter<void>();
   @Output() toggleLayer = new EventEmitter<LayerMode>();
   @Output() logout = new EventEmitter<void>();
-  protected readonly LayerMode = LayerMode;
 
-  protected switchLayerAndClose(): void {
-    this.toggleLayer.emit(this.layerMode === LayerMode.ROAD ? LayerMode.SATELLITE : LayerMode.ROAD);
+  selectLayer(layer: LayerMode): void {
+    this.toggleLayer.emit(layer);
     this.close.emit();
   }
 
@@ -153,11 +198,12 @@ export class SettingsSidebarComponent {
     this.close.emit();
   }
 
+  protected readonly LayerMode = LayerMode;
   protected readonly COORDINATES = COORDINATES;
   protected readonly ACCURACY = ACCURACY;
   protected readonly METER_UNIT = METER_UNIT;
-  protected readonly SWITCH_MAP_MODE = SWITCH_MAP_MODE;
   protected readonly SATELLITE = SATELLITE;
-  protected readonly ROAD = ROAD;
+  protected readonly ROADS = ROADS;
+  protected readonly TOPO_25 = TOPO_25;
   protected readonly LOGOUT = LOGOUT;
 }
